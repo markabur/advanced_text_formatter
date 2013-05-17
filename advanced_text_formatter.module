@@ -291,7 +291,7 @@ function advanced_text_formatter_field_formatter_view($entity_type, $entity, $fi
  * Trim text
  *
  * @param string $text
- *   The string is being trimmed
+ *   The string is being trimmed.
  *
  * @param array $options
  *   An associative array containing:
@@ -301,8 +301,7 @@ function advanced_text_formatter_field_formatter_view($entity_type, $entity, $fi
  *   - ellipsis: If TRUE, a "..." will be added if a field was trimmed.
  *
  * @return string
- *   The trimmed string
- *
+ *   The trimmed string.
  */
 function advanced_text_formatter_trim_text($text, $options) {
   if (!isset($options['html'])) {
