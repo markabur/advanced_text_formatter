@@ -288,7 +288,7 @@ function advanced_text_formatter_field_formatter_view($entity_type, $entity, $fi
 }
 
 /**
- * Trim text
+ * Trim text.
  *
  * @param string $text
  *   The string is being trimmed.
