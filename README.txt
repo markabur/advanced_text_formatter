@@ -35,16 +35,22 @@ for the entity (Node content type, for example) with a text field, text area
 or text format, choose Advanced Text from the formatters list
 
 Options:
-- Trim length:  The maximum number of characters the a field can be. Set this to 0 if you don't want to cut the text. Otherwise, input a positive integer.
+- Trim length:  The maximum number of characters the a field can be. Set this to
+  0 if you don't want to cut the text. Otherwise, input a positive integer.
 - Ellipsis: If checked, a "..." will be added if a field was trimmed.
-- Word Boundary: If checked, this field be trimmed only on a word boundary. This is guaranteed to be the maximum characters stated or less. If there are no word boundaries this could trim a field to nothing.
+- Word Boundary: If checked, this field be trimmed only on a word boundary. This
+  is guaranteed to be the maximum characters stated or less. If there are no
+  word boundaries this could trim a field to nothing.
 - Token Replace: Run token replace on this field.
 - Display: Display this field as plain text or HTML.
 - Filter: Filter the value of this field.
   - None: No filter.
-  - Selected Text Format: Use the format that is chosen by user when he inputs the value.
+  - Selected Text Format: Use the format that is chosen by user when he inputs
+    the value.
   - PHP strip_tags(): Filter this field by using PHP strip_tags().
   - Drupal: Filter this field by using Drupal's filters.
-- Allowed Tags (when Filter is PHP strip_tags()): Specify tags which should not be stripped.
+- Allowed Tags (when Filter is PHP strip_tags()): Specify tags which should not
+  be stripped.
 - Filter (when Filter is Drupal): Drupal's filters.
-- Keep new lines: All new lines will be converted to &lt;br&gt; by using PHP nl2br()
+- Keep new lines: All new lines will be converted to &lt;br&gt; by using PHP
+  nl2br()
