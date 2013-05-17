@@ -47,4 +47,4 @@ Options:
   - Drupal: Filter this field by using Drupal's filters.
 - Allowed Tags (when Filter is PHP strip_tags()): Specify tags which should not be stripped.
 - Filter (when Filter is Drupal): Drupal's filters.
-- Keep new lines: All new lines will be converted to <br> by using PHP nl2br()
+- Keep new lines: All new lines will be converted to &lt;br&gt; by using PHP nl2br()

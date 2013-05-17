@@ -2,6 +2,8 @@
 
 /**
  * @file
+ *
+ * Advanced Text Formatter
  */
 
 /**
@@ -110,15 +112,15 @@ function advanced_text_formatter_field_formatter_settings_form($field, $instance
 
     $formats = filter_formats();
 
-    foreach($formats as $format => $info) {
+    foreach ($formats as $format => $info) {
       $element['format']['#options'][$format] = $info->name;
     }
 
     $element['allowable_tags'] = array(
       '#type'          => 'textfield',
       '#title'         => t('Allowed Tags'),
-      '#description'   => t('Multiple allowed tags, separated by <i>comma</i> or <i>space</i>. See PHP <a href="!link">strip_tags()</a> for more information', array(
-                            '!link' => 'http://php.net/manual/en/function.strip-tags.php'
+      '#description'   => t('Multiple allowed tags, separated by <em>comma</em> or <em>space</em>. See PHP <a href="!link">strip_tags()</a> for more information', array(
+                            '!link' => 'http://php.net/manual/en/function.strip-tags.php',
                           )),
       '#default_value' => $settings['allowable_tags'],
       '#states'        => array(
@@ -165,24 +167,24 @@ function advanced_text_formatter_field_formatter_settings_summary($field, $insta
     $summary[] = t('Word Boundary') . ': ' . ((isset($settings['word_boundary']) && $settings['word_boundary']) ? t('Yes') : t('No'));
     $summary[] = t('Token Replace') . ': ' . ((isset($settings['token_replace']) && $settings['token_replace']) ? t('Yes') : t('No'));
 
-    if($settings['display'] == 'html') {
+    if ($settings['display'] == 'html') {
       $summary[] = t('Display: @display', array('@display' => t('HTML')));
 
-      if($settings['filter'] == 'drupal') {
+      if ($settings['filter'] == 'drupal') {
         $summary[] = t('Filter: @filter', array('@filter' => t('Drupal')));
 
         $formats = filter_formats();
         $format  = isset($formats[$settings['format']]) ? $formats[$settings['format']]->name : t('Unknown');
         $summary[] = t('Format: @format', array('@format' => $format));
       }
-      else if($settings['filter'] == 'php') {
+      elseif ($settings['filter'] == 'php') {
         $summary[] = t('Filter: @filter', array('@filter' => t('PHP (Strip tags)')));
 
         $tags = trim($settings['allowable_tags']);
         $tags = preg_split('#,|\||\s#', $tags);
         $tags = array_filter($tags);
 
-        if(empty($tags)) {
+        if (empty($tags)) {
           $summary[] = t('Strip all tags');
         }
         else {
@@ -190,11 +192,11 @@ function advanced_text_formatter_field_formatter_settings_summary($field, $insta
           $summary[] = t('Allowed tags: <i>@tags</i>', array('@tags' => $tags));
         }
 
-        if(empty($settings['newline'])) {
+        if (empty($settings['newline'])) {
           $summary[] = t('No new lines');
         }
       }
-      else if($settings['filter'] == 'input') {
+      elseif ($settings['filter'] == 'input') {
         $summary[] = t('Filter: @filter', array('@filter' => t('Selected Text Format')));
       }
       else {
@@ -204,7 +206,7 @@ function advanced_text_formatter_field_formatter_settings_summary($field, $insta
     else {
       $text = t('Display: @display', array('@display' => t('Plain Text')));
 
-      if(empty($settings['newline'])) {
+      if (empty($settings['newline'])) {
         $text .= ', ' . t('no new lines');
       }
 
@@ -232,20 +234,20 @@ function advanced_text_formatter_field_formatter_view($entity_type, $entity, $fi
       foreach ($items as $delta => $item) {
         $output = $item['value'];
 
-        if($settings['token_replace']) {
+        if ($settings['token_replace']) {
           $output = token_replace($output, $token_data);
         }
 
-        if($settings['display'] == 'html') {
-          if($settings['filter'] == 'input') {
+        if ($settings['display'] == 'html') {
+          if ($settings['filter'] == 'input') {
             $output = check_markup($output, $item['format'], $langcode);
           }
-          else if($settings['filter'] == 'php') {
+          elseif ($settings['filter'] == 'php') {
             $tags = trim($settings['allowable_tags']);
             $tags = preg_split('#,|\||\s#', $tags);
             $tags = array_filter($tags);
 
-            if(empty($tags)) {
+            if (empty($tags)) {
               $tags = '';
             }
             else {
@@ -254,7 +256,7 @@ function advanced_text_formatter_field_formatter_view($entity_type, $entity, $fi
 
             $output = strip_tags($output, $tags);
           }
-          else if($settings['filter'] == 'drupal') {
+          elseif ($settings['filter'] == 'drupal') {
             $output = check_markup($output, $settings['format'], $langcode);
           }
         }
@@ -262,7 +264,7 @@ function advanced_text_formatter_field_formatter_view($entity_type, $entity, $fi
           $output = strip_tags($output);
         }
 
-        if($settings['trim_length'] > 0) {
+        if ($settings['trim_length'] > 0) {
           $options  = array(
             'word_boundary' => $settings['word_boundary'],
             'max_length'    => $settings['trim_length'],
@@ -273,7 +275,7 @@ function advanced_text_formatter_field_formatter_view($entity_type, $entity, $fi
           $output = advanced_text_formatter_trim_text($output, $options);
         }
 
-        if($newline) {
+        if ($newline) {
           $output = nl2br($output);
         }
 
@@ -287,14 +289,14 @@ function advanced_text_formatter_field_formatter_view($entity_type, $entity, $fi
 }
 
 function advanced_text_formatter_trim_text($text, $options) {
-  if(!isset($options['html'])) {
-    $options['html'] = true;
+  if (!isset($options['html'])) {
+    $options['html'] = TRUE;
   }
 
   if (drupal_strlen($text) > $options['max_length']) {
     $text = drupal_substr($text, 0, $options['max_length']);
 
-    // TODO: replace this with cleanstring of ctools
+    // TODO: replace this with cleanstring of ctools.
     if (!empty($options['word_boundary'])) {
       $regex = "(.*)\b.+";
 
@@ -311,7 +313,7 @@ function advanced_text_formatter_trim_text($text, $options) {
       }
     }
 
-    // Remove scraps of HTML entities from the end of a strings
+    // Remove scraps of HTML entities from the end of a strings.
     $text = rtrim(preg_replace('/(?:<(?!.+>)|&(?!.+;)).*$/us', '', $text));
 
     if (!empty($options['ellipsis'])) {
@@ -325,4 +327,3 @@ function advanced_text_formatter_trim_text($text, $options) {
 
   return $text;
 }
-
