@@ -1,1 +1,6 @@
 name = Advanced Text Formatter
+description = ""
+core = 7.x
+package = Fields
+
+dependencies[] = text

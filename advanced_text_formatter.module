@@ -1,0 +1,283 @@
+<?php
+
+/**
+ * @file
+ */
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function advanced_text_formatter_field_formatter_info() {
+  return array(
+    'advanced_text' => array(
+      'label'       => t('Advanced Text'),
+      'field types' => array('text', 'text_long', 'text_with_summary'),
+      'settings'    => array(
+        'trim_length'    => 600,
+        'ellipsis'       => 1,
+        'word_boundary'  => 1,
+        'token_replace'  => '0',
+        'display'        => 'html',
+        'newline'        => '0',
+        'filter'         => 'input',
+        'format'         => 'filtered_html',
+        'allowable_tags' => array(),
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ */
+function advanced_text_formatter_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  $display  = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+  $element  = array();
+
+  if ($display['type'] == 'advanced_text') {
+    $elid_display = drupal_html_id('advanced_text_formatter_display');
+    $elid_filter  = drupal_html_id('advanced_text_formatter_filter');
+
+    $element['trim_length'] = array(
+      '#title'            => t('Trim length'),
+      '#type'             => 'textfield',
+      '#size'             => 10,
+      '#default_value'    => $settings['trim_length'],
+      '#element_validate' => array('element_validate_integer_positive'),
+      '#required'         => TRUE,
+    );
+
+    $element['ellipsis'] = array(
+      '#title'         => t('Ellipsis'),
+      '#type'          => 'checkbox',
+      '#default_value' => $settings['ellipsis'],
+    );
+
+    $element['word_boundary'] = array(
+      '#title'         => t('Word Boundary'),
+      '#type'          => 'checkbox',
+      '#default_value' => $settings['word_boundary'],
+    );
+
+    $element['token_replace'] = array(
+      '#title'         => t('Token Replace'),
+      '#type'          => 'checkbox',
+      '#default_value' => $settings['token_replace'],
+    );
+
+    $element['display'] = array(
+      '#id'      => $elid_display,
+      '#title'   => t('Display'),
+      '#type'    => 'select',
+      '#options' => array(
+        'plain_text' => t('Plain Text'),
+        'html'       => t('HTML'),
+      ),
+      '#default_value' => $settings['display'],
+    );
+
+    $element['filter'] = array(
+      '#id'      => $elid_filter,
+      '#title'   => t('Filter'),
+      '#type'    => 'select',
+      '#options' => array(
+        'none'   => t('None'),
+        'input'  => t('Selected Text Format'),
+        'php'    => t('PHP (Strip tags)'),
+        'drupal' => t('Drupal'),
+      ),
+      '#default_value' => $settings['filter'],
+      '#states'        => array(
+        'visible' => array(
+          '#' . $elid_display => array('value' => 'html'),
+        ),
+      ),
+    );
+
+    $element['format'] = array(
+      '#title'         => t('Format'),
+      '#type'          => 'select',
+      '#options'       => array(),
+      '#default_value' => $settings['format'],
+      '#states'        => array(
+        'visible' => array(
+          '#' . $elid_display => array('value' => 'html'),
+          '#' . $elid_filter  => array('value' => 'drupal'),
+        ),
+      ),
+    );
+
+    $formats = filter_formats();
+
+    foreach($formats as $format => $info) {
+      $element['format']['#options'][$format] = $info->name;
+    }
+
+    $element['allowable_tags'] = array(
+      '#type'          => 'textfield',
+      '#title'         => t('Allowed Tags'),
+      '#description'   => t('Multiple allowed tags, separated by <i>comma</i> or <i>space</i>'),
+      '#default_value' => $settings['allowable_tags'],
+      '#states'        => array(
+        'visible' => array(
+          '#' . $elid_display => array('value' => 'html'),
+          '#' . $elid_filter  => array('value' => 'php'),
+        ),
+      ),
+    );
+
+    $element['newline'] = array(
+      '#title'   => t('Keep new lines'),
+      '#type'    => 'radios',
+      '#options' => array(
+        '1' => t('Yes'),
+        '0' => t('No'),
+      ),
+      '#default_value' => $settings['newline'],
+      '#states'        => array(
+        'invisible' => array(
+          '#' . $elid_display => array('value' => 'html'),
+          '[name="fields[body][settings_edit_form][settings][filter]"]'  => array('!value' => 'php'),
+        ),
+      ),
+    );
+
+    $element['br'] = array('#markup' => '<br/>');
+  }
+
+  return $element;
+}
+
+/**
+ * Implements hook_field_formatter_settings_summary().
+ */
+function advanced_text_formatter_field_formatter_settings_summary($field, $instance, $view_mode) {
+  $display  = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+  $summary  = array();
+
+  if ($display['type'] == 'advanced_text') {
+    $summary[] = t('Trim length') . ': ' . $settings['trim_length'];
+    $summary[] = t('Ellipsis') . ': ' . ((isset($settings['ellipsis']) && $settings['ellipsis']) ? t('Yes') : t('No'));
+    $summary[] = t('Word Boundary') . ': ' . ((isset($settings['word_boundary']) && $settings['word_boundary']) ? t('Yes') : t('No'));
+    $summary[] = t('Token Replace') . ': ' . ((isset($settings['token_replace']) && $settings['token_replace']) ? t('Yes') : t('No'));
+
+    if($settings['display'] == 'html') {
+      $summary[] = t('Display: @display', array('@display' => t('HTML')));
+
+      if($settings['filter'] == 'drupal') {
+        $summary[] = t('Filter: @filter', array('@filter' => t('Drupal')));
+
+        $formats = filter_formats();
+        $format  = isset($formats[$settings['format']]) ? $formats[$settings['format']]->name : t('Unknown');
+        $summary[] = t('Format: @format', array('@format' => $format));
+      }
+      else if($settings['filter'] == 'php') {
+        $summary[] = t('Filter: @filter', array('@filter' => t('PHP (Strip tags)')));
+
+        $tags = trim($settings['allowable_tags']);
+        $tags = preg_split('#,|\||\s#', $tags);
+        $tags = array_filter($tags);
+
+        if(empty($tags)) {
+          $summary[] = t('Strip all tags');
+        }
+        else {
+          $tags = '<' . implode('>, <', $tags) . '>';
+          $summary[] = t('Allowed tags: <i>@tags</i>', array('@tags' => $tags));
+        }
+
+        if(empty($settings['newline'])) {
+          $summary[] = t('No new lines');
+        }
+      }
+      else if($settings['filter'] == 'input') {
+        $summary[] = t('Filter: @filter', array('@filter' => t('Selected Text Format')));
+      }
+      else {
+        $summary[] = t('Filter: @filter', array('@filter' => t('None')));
+      }
+    }
+    else {
+      $text = t('Display: @display', array('@display' => t('Plain Text')));
+
+      if(empty($settings['newline'])) {
+        $text .= ', ' . t('no new lines');
+      }
+
+      $summary[] = $text;
+    }
+  }
+
+  $summary = array_filter($summary);
+
+  return implode('<br/>', $summary);
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function advanced_text_formatter_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+
+  switch ($display['type']) {
+    case 'advanced_text':
+      $settings = $display['settings'];
+      $alter    = array(
+        'word_boundary' => $settings['word_boundary'],
+        'max_length'    => $settings['trim_length'],
+        'ellipsis'      => $settings['ellipsis'],
+        'html'          => $settings['display'] == 'html',
+      );
+
+      $newline    = ($settings['display'] != 'html' || ($settings['display'] == 'html' && $settings['filter'] == 'php')) && !empty($settings['newline']);
+      $token_data = array($entity_type => $entity);
+
+      foreach ($items as $delta => $item) {
+        $output = $item['value'];
+
+        if($settings['token_replace']) {
+          $output = token_replace($output, $token_data);
+        }
+
+        if($settings['display'] == 'html') {
+          if($settings['filter'] == 'input') {
+            $output = check_markup($output, $item['format'], $langcode);
+          }
+          else if($settings['filter'] == 'php') {
+            $tags = trim($settings['allowable_tags']);
+            $tags = preg_split('#,|\||\s#', $tags);
+            $tags = array_filter($tags);
+
+            if(empty($tags)) {
+              $tags = '';
+            }
+            else {
+              $tags = '<' . implode('><', $tags) . '>';
+            }
+
+            $output = strip_tags($output, $tags);
+          }
+          else if($settings['filter'] == 'drupal') {
+            $output = check_markup($output, $settings['format'], $langcode);
+          }
+        }
+        else {
+          $output = strip_tags($output);
+        }
+
+        $output = trim_text($alter, $output);
+
+        if($newline) {
+          $output = nl2br($output);
+        }
+
+        $element[$delta] = array('#markup' => $output);
+      }
+
+      break;
+  }
+
+  return $element;
+}
