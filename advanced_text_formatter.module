@@ -14,15 +14,14 @@ function advanced_text_formatter_field_formatter_info() {
       'label'       => t('Advanced Text'),
       'field types' => array('text', 'text_long', 'text_with_summary'),
       'settings'    => array(
-        'trim_length'    => 600,
-        'ellipsis'       => 1,
-        'word_boundary'  => 1,
-        'token_replace'  => '0',
-        'display'        => 'html',
-        'newline'        => '0',
-        'filter'         => 'input',
-        'format'         => 'filtered_html',
-        'allowable_tags' => array(),
+        'trim_length'   => 600,
+        'ellipsis'      => 1,
+        'word_boundary' => 1,
+        'token_replace' => 0,
+        'filter'        => 'input',
+        'format'        => 'plain_text',
+        'allowed_html'  => '<a> <em> <strong>',
+        'autop'         => 0,
       ),
     ),
   );
@@ -37,12 +36,14 @@ function advanced_text_formatter_field_formatter_settings_form($field, $instance
   $element  = array();
 
   if ($display['type'] == 'advanced_text') {
-    $elid_display = drupal_html_id('advanced_text_formatter_display');
-    $elid_filter  = drupal_html_id('advanced_text_formatter_filter');
+    $elid_trim   = drupal_html_id('advanced_text_formatter_trim');
+    $elid_filter = drupal_html_id('advanced_text_formatter_filter');
 
     $element['trim_length'] = array(
-      '#title'            => t('Trim length'),
+      '#id'               => $elid_trim,
       '#type'             => 'textfield',
+      '#title'            => t('Trim length'),
+      '#description'      => t("Set this to 0 if you don't want to cut the text. Otherwise, input a positive integer."),
       '#size'             => 10,
       '#default_value'    => $settings['trim_length'],
       '#element_validate' => array('element_validate_integer'),
@@ -50,32 +51,36 @@ function advanced_text_formatter_field_formatter_settings_form($field, $instance
     );
 
     $element['ellipsis'] = array(
-      '#title'         => t('Ellipsis'),
       '#type'          => 'checkbox',
+      '#title'         => t('Ellipsis'),
+      '#description'   => t('If checked, a "..." will be added if a field was trimmed.'),
       '#default_value' => $settings['ellipsis'],
+      '#states'        => array(
+        'visible' => array(
+          '#' . $elid_trim  => array('!value' => '0'),
+        ),
+      ),
     );
 
     $element['word_boundary'] = array(
-      '#title'         => t('Word Boundary'),
       '#type'          => 'checkbox',
+      '#title'         => t('Word Boundary'),
+      '#description'   => t('If checked, this field be trimmed only on a word boundary.'),
       '#default_value' => $settings['word_boundary'],
+      '#states'        => array(
+        'visible' => array(
+          '#' . $elid_trim  => array('!value' => '0'),
+        ),
+      ),
     );
+
+    $token_link = _advanced_text_formatter_browse_tokens($instance['entity_type']);
 
     $element['token_replace'] = array(
-      '#title'         => t('Token Replace'),
       '#type'          => 'checkbox',
+      '#description'   => t('Replace text pattern. e.g [node:title] or [node:author:name], by token values.') . ' ' . $token_link,
+      '#title'         => t('Token Replace'),
       '#default_value' => $settings['token_replace'],
-    );
-
-    $element['display'] = array(
-      '#id'      => $elid_display,
-      '#title'   => t('Display'),
-      '#type'    => 'select',
-      '#options' => array(
-        'plain_text' => t('Plain Text'),
-        'html'       => t('HTML'),
-      ),
-      '#default_value' => $settings['display'],
     );
 
     $element['filter'] = array(
@@ -84,16 +89,11 @@ function advanced_text_formatter_field_formatter_settings_form($field, $instance
       '#type'    => 'select',
       '#options' => array(
         'none'   => t('None'),
-        'input'  => t('Selected Text Format'),
-        'php'    => t('PHP strip_tags()'),
-        'drupal' => t('Drupal'),
+        'input'      => t('Selected Text Format'),
+        'php'        => t('Limit allowed HTML tags'),
+        'drupal'     => t('Drupal'),
       ),
       '#default_value' => $settings['filter'],
-      '#states'        => array(
-        'visible' => array(
-          '#' . $elid_display => array('value' => 'html'),
-        ),
-      ),
     );
 
     $element['format'] = array(
@@ -103,7 +103,6 @@ function advanced_text_formatter_field_formatter_settings_form($field, $instance
       '#default_value' => $settings['format'],
       '#states'        => array(
         'visible' => array(
-          '#' . $elid_display => array('value' => 'html'),
           '#' . $elid_filter  => array('value' => 'drupal'),
         ),
       ),
@@ -115,32 +114,27 @@ function advanced_text_formatter_field_formatter_settings_form($field, $instance
       $element['format']['#options'][$format] = $info->name;
     }
 
-    $element['allowable_tags'] = array(
+    $element['allowed_html'] = array(
       '#type'          => 'textfield',
-      '#title'         => t('Allowed Tags'),
+      '#title'         => t('Allowed HTML tags'),
       '#description'   => t('Multiple allowed tags, separated by <em>comma</em> or <em>space</em>. See PHP <a href="!link">strip_tags()</a> for more information', array(
                             '!link' => 'http://php.net/manual/en/function.strip-tags.php',
                           )),
-      '#default_value' => $settings['allowable_tags'],
+      '#default_value' => $settings['allowed_html'],
       '#states'        => array(
         'visible' => array(
-          '#' . $elid_display => array('value' => 'html'),
           '#' . $elid_filter  => array('value' => 'php'),
         ),
       ),
     );
 
-    $element['newline'] = array(
-      '#title'   => t('Keep new lines'),
-      '#type'    => 'radios',
-      '#options' => array(
-        '1' => t('Yes'),
-        '0' => t('No'),
-      ),
-      '#default_value' => $settings['newline'],
+    $element['autop'] = array(
+      '#title'         => t('Convert line breaks into HTML'),
+      '#type'          => 'checkbox',
+      '#return_value'  => 1,
+      '#default_value' => $settings['autop'],
       '#states'        => array(
         'invisible' => array(
-          '#' . $elid_display => array('value' => 'html'),
           '#' . $elid_filter  => array('!value' => 'php'),
         ),
       ),
@@ -161,55 +155,56 @@ function advanced_text_formatter_field_formatter_settings_summary($field, $insta
   $summary  = array();
 
   if ($display['type'] == 'advanced_text') {
-    $summary[] = t('Trim length') . ': ' . $settings['trim_length'];
-    $summary[] = t('Ellipsis') . ': ' . ((isset($settings['ellipsis']) && $settings['ellipsis']) ? t('Yes') : t('No'));
-    $summary[] = t('Word Boundary') . ': ' . ((isset($settings['word_boundary']) && $settings['word_boundary']) ? t('Yes') : t('No'));
-    $summary[] = t('Token Replace') . ': ' . ((isset($settings['token_replace']) && $settings['token_replace']) ? t('Yes') : t('No'));
+    $yes = t('Yes');
+    $no  = t('No');
 
-    if ($settings['display'] == 'html') {
-      $summary[] = t('Display: @display', array('@display' => t('HTML')));
+    if ($settings['trim_length'] > 0) {
+      $summary[] = t('Trim length') . ': ' . $settings['trim_length'];
+      $summary[] = t('Ellipsis') . ': ' . ((isset($settings['ellipsis']) && $settings['ellipsis']) ? $yes : $no);
+      $summary[] = t('Word Boundary') . ': ' . ((isset($settings['word_boundary']) && $settings['word_boundary']) ? $yes : $no);
+    }
 
-      if ($settings['filter'] == 'drupal') {
-        $summary[] = t('Filter: @filter', array('@filter' => t('Drupal')));
+    $token_link = _advanced_text_formatter_browse_tokens($instance['entity_type']);
+    $summary[] = t('Token Replace') . ': ' . ((isset($settings['token_replace']) && $settings['token_replace']) ? ($yes . '. ' . $token_link) : $no);
 
+    switch ($settings['filter']) {
+      case 'drupal':
         $formats = filter_formats();
         $format  = isset($formats[$settings['format']]) ? $formats[$settings['format']]->name : t('Unknown');
-        $summary[] = t('Format: @format', array('@format' => $format));
-      }
-      elseif ($settings['filter'] == 'php') {
-        $summary[] = t('Filter: @filter', array('@filter' => t('PHP (Strip tags)')));
 
-        $tags = trim($settings['allowable_tags']);
-        $tags = preg_split('#,|\||\s#', $tags);
-        $tags = array_filter($tags);
+        $summary[] = t('Filter: @filter', array('@filter' => t('Drupal')));
+        $summary[] = t('Format: @format', array('@format' => $format));
+
+        break;
+
+      case 'php':
+        $text = array();
+        $tags = trim($settings['allowed_html']);
 
         if (empty($tags)) {
-          $summary[] = t('Strip all tags');
+          $text[] = t('Remove all HTML tags.');
         }
         else {
-          $tags = '<' . implode('>, <', $tags) . '>';
-          $summary[] = t('Allowed tags: <i>@tags</i>', array('@tags' => $tags));
+          $text[] = t('Limit allowed HTML tags: !tags.', array('!tags' => $tags));
         }
 
-        if (empty($settings['newline'])) {
-          $summary[] = t('No new lines');
+        if (empty($settings['autop'])) {
+          $text[] = t('Convert line breaks into HTML.');
         }
-      }
-      elseif ($settings['filter'] == 'input') {
+
+        $summary[] = t('Filter: @filter', array('@filter' => implode(' ', $text)));
+
+        break;
+
+      case 'input':
         $summary[] = t('Filter: @filter', array('@filter' => t('Selected Text Format')));
-      }
-      else {
+
+        break;
+
+      default:
         $summary[] = t('Filter: @filter', array('@filter' => t('None')));
-      }
-    }
-    else {
-      $text = t('Display: @display', array('@display' => t('Plain Text')));
 
-      if (empty($settings['newline'])) {
-        $text .= ', ' . t('no new lines');
-      }
-
-      $summary[] = $text;
+        break;
     }
   }
 
@@ -227,7 +222,6 @@ function advanced_text_formatter_field_formatter_view($entity_type, $entity, $fi
   switch ($display['type']) {
     case 'advanced_text':
       $settings   = $display['settings'];
-      $newline    = ($settings['display'] != 'html' || ($settings['display'] == 'html' && $settings['filter'] == 'php')) && !empty($settings['newline']);
       $token_data = array($entity_type => $entity);
 
       foreach ($items as $delta => $item) {
@@ -237,30 +231,27 @@ function advanced_text_formatter_field_formatter_view($entity_type, $entity, $fi
           $output = token_replace($output, $token_data);
         }
 
-        if ($settings['display'] == 'html') {
-          if ($settings['filter'] == 'input') {
-            $output = check_markup($output, $item['format'], $langcode);
-          }
-          elseif ($settings['filter'] == 'php') {
-            $tags = trim($settings['allowable_tags']);
-            $tags = preg_split('#,|\||\s#', $tags);
-            $tags = array_filter($tags);
-
-            if (empty($tags)) {
-              $tags = '';
-            }
-            else {
-              $tags = '<' . implode('><', $tags) . '>';
-            }
-
-            $output = strip_tags($output, $tags);
-          }
-          elseif ($settings['filter'] == 'drupal') {
+        switch ($settings['filter']) {
+          case 'drupal':
             $output = check_markup($output, $settings['format'], $langcode);
-          }
-        }
-        else {
-          $output = strip_tags($output);
+
+            break;
+
+          case 'php':
+            $tags   = trim($settings['allowed_html']);
+            $tags   = str_replace(' ', '', $tags);
+            $output = strip_tags($output, $tags);
+
+            if ($settings['autop']) {
+              $output = nl2br($output);
+            }
+
+            break;
+
+          case 'input':
+            $output = check_markup($output, $item['format'], $langcode);
+
+            break;
         }
 
         if ($settings['trim_length'] > 0) {
@@ -268,14 +259,9 @@ function advanced_text_formatter_field_formatter_view($entity_type, $entity, $fi
             'word_boundary' => $settings['word_boundary'],
             'max_length'    => $settings['trim_length'],
             'ellipsis'      => $settings['ellipsis'],
-            'html'          => $settings['display'] == 'html',
           );
 
           $output = advanced_text_formatter_trim_text($output, $options);
-        }
-
-        if ($newline) {
-          $output = nl2br($output);
         }
 
         $element[$delta] = array('#markup' => $output);
@@ -341,4 +327,28 @@ function advanced_text_formatter_trim_text($text, $options) {
   }
 
   return $text;
+}
+
+/**
+ * Get a link to browse for available tokens.
+ *
+ * @param mixed $token_types
+ *   A string or array contains the token types. See theme_token_tree() for more
+ *   details.
+ *
+ * @return string
+ *   A HTML link
+ */
+function _advanced_text_formatter_browse_tokens($token_types) {
+  if (!module_exists('token')) {
+    return;
+  }
+
+  if (!is_array($token_types)) {
+    $token_types = array($token_types);
+  }
+
+  $vars['token_types'] = $token_types;
+
+  return theme('token_tree_link', $vars);
 }

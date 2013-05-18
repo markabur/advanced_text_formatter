@@ -42,15 +42,14 @@ Options:
   is guaranteed to be the maximum characters stated or less. If there are no
   word boundaries this could trim a field to nothing.
 - Token Replace: Run token replace on this field.
-- Display: Display this field as plain text or HTML.
 - Filter: Filter the value of this field.
   - None: No filter.
   - Selected Text Format: Use the format that is chosen by user when he inputs
     the value.
-  - PHP strip_tags(): Filter this field by using PHP strip_tags().
+  - Limit allowed HTML tags: Filter this field by using PHP strip_tags().
   - Drupal: Filter this field by using Drupal's filters.
-- Allowed Tags (when Filter is PHP strip_tags()): Specify tags which should not
-  be stripped.
+- Allowed HTML tags (when Filter is Limit allowed HTML tags): Specify tags which
+  should not be stripped.
 - Filter (when Filter is Drupal): Drupal's filters.
-- Keep new lines: All new lines will be converted to &lt;br&gt; by using PHP
-  nl2br()
+- Convert line breaks into HTML: All new lines will be converted to &lt;br&gt;
+  by using PHP nl2br()
