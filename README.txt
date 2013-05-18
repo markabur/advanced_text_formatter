@@ -46,10 +46,10 @@ Options:
   - None: No filter.
   - Selected Text Format: Use the format that is chosen by user when he inputs
     the value.
-  - Limit allowed HTML tags: Filter this field by using PHP strip_tags().
+  - Limit allowed HTML tags: A list of HTML tags that can be used.
   - Drupal: Filter this field by using Drupal's filters.
 - Allowed HTML tags (when Filter is Limit allowed HTML tags): Specify tags which
   should not be stripped.
-- Filter (when Filter is Drupal): Drupal's filters.
+- Format (when Filter is Drupal): Drupal's filters.
 - Convert line breaks into HTML: All new lines will be converted to &lt;br&gt;
   by using PHP nl2br()
