@@ -9,7 +9,7 @@
  * Implements hook_field_widget_info_alter().
  */
 function advanced_text_formatter_field_widget_info_alter(&$info) {
-  if (module_exists('text') && module_exists('token')) {
+  if (module_exists('token')) {
     $info['text_textarea']['settings']['show_token_tree'] = FALSE;
     $info['text_textfield']['settings']['show_token_tree'] = FALSE;
     $info['text_textarea_with_summary']['settings']['show_token_tree'] = FALSE;
@@ -156,7 +156,10 @@ function advanced_text_formatter_field_formatter_settings_form($field, $instance
 
     $element['token_replace'] = array(
       '#type'          => 'checkbox',
-      '#description'   => t('Replace text pattern. e.g [node:title] or [node:author:name], by token values.') . ' ' . $token_link,
+      '#description'   => t('Replace text pattern. e.g %node-title-token or %node-author-name-token, by token values.', array(
+                            '%node-title-token'       => '[node:title]',
+                            '%node-author-name-token' => '[node:author:name]',
+                          )) . ' ' . $token_link,
       '#title'         => t('Token Replace'),
       '#default_value' => $settings['token_replace'],
     );
@@ -195,8 +198,8 @@ function advanced_text_formatter_field_formatter_settings_form($field, $instance
     $element['allowed_html'] = array(
       '#type'          => 'textfield',
       '#title'         => t('Allowed HTML tags'),
-      '#description'   => t('See PHP <a href="!link">strip_tags()</a> for more information', array(
-                            '!link' => 'http://php.net/manual/en/function.strip-tags.php',
+      '#description'   => t('See PHP <a href="@link">strip_tags()</a> for more information', array(
+                            '@link' => 'http://php.net/manual/en/function.strip-tags.php',
                           )),
       '#default_value' => $settings['allowed_html'],
       '#states'        => array(
