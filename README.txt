@@ -53,3 +53,9 @@ Options:
 - Format (when Filter is Drupal): Drupal's filters.
 - Convert line breaks into HTML: All new lines will be converted to &lt;br&gt;
   by using PHP nl2br()
+
+Optional
+
+If you want to display the list of available tokens, you just need to install
+Token module, then do to Manage Fields page, edit the field, and select the
+"Show available tokens in field's description"

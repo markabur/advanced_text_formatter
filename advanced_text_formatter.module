@@ -6,6 +6,84 @@
  */
 
 /**
+ * Implements hook_field_widget_info_alter().
+ */
+function advanced_text_formatter_field_widget_info_alter(&$info) {
+  if (module_exists('text') && module_exists('token')) {
+    $info['text_textarea']['settings']['show_token_tree'] = FALSE;
+    $info['text_textfield']['settings']['show_token_tree'] = FALSE;
+    $info['text_textarea_with_summary']['settings']['show_token_tree'] = FALSE;
+  }
+}
+
+/**
+ * Implements hook_field_widget_WIDGET_TYPE_form_alter().
+ */
+function advanced_text_formatter_field_widget_text_textarea_form_alter(&$element, &$form_state, $context) {
+  $instance = $context['instance'];
+
+  if (!module_exists('token') || empty($instance['widget']['settings']['show_token_tree'])) {
+    return;
+  }
+
+  $description = trim($element['#description']);
+
+  if (!empty($description)) {
+    if (substr($description, -1) != '.') {
+      $description .= '. ';
+    }
+    else {
+      $description .= ' ';
+    }
+  }
+
+  $description .= _advanced_text_formatter_browse_tokens($instance['entity_type']);
+
+  $element['#description'] = $description;
+  $element['value']['#description'] = $description;
+}
+
+/**
+ * Implements hook_field_widget_WIDGET_TYPE_form_alter().
+ */
+function advanced_text_formatter_field_widget_text_textfield_form_alter(&$element, &$form_state, $context) {
+  $instance = $context['instance'];
+
+  if (!module_exists('token') || empty($instance['widget']['settings']['show_token_tree'])) {
+    return;
+  }
+
+  $description = trim($element['#description']);
+
+  if (!empty($description)) {
+    if (substr($description, -1) != '.') {
+      $description .= '. ';
+    }
+    else {
+      $description .= ' ';
+    }
+  }
+
+  $description .= _advanced_text_formatter_browse_tokens($instance['entity_type']);
+
+  $element['#description'] = $description;
+  $element['value']['#description'] = $description;
+}
+
+/**
+ * Implements hook_field_widget_WIDGET_TYPE_form_alter().
+ */
+function advanced_text_formatter_field_widget_text_textarea_with_summary_form_alter(&$element, &$form_state, $context) {
+  $instance = $context['instance'];
+
+  if (!module_exists('token') || empty($instance['widget']['settings']['show_token_tree'])) {
+    return;
+  }
+
+  $element['#pre_render'][] = '_advanced_text_formatter_field_add_token_tree';
+}
+
+/**
  * Implements hook_field_formatter_info().
  */
 function advanced_text_formatter_field_formatter_info() {
@@ -274,6 +352,32 @@ function advanced_text_formatter_field_formatter_view($entity_type, $entity, $fi
 }
 
 /**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function advanced_text_formatter_form_field_ui_field_edit_form_alter(&$form, &$form_state) {
+  if (!module_exists('token')) {
+    return;
+  }
+
+  $instance    = $form_state['build_info']['args'][0];
+  $widget_type = $instance['widget']['type'];
+
+  switch ($widget_type) {
+    case 'text_textarea':
+    case 'text_textfield':
+    case 'text_textarea_with_summary':
+      $form['instance']['widget']['settings']['show_token_tree'] = array(
+        '#type'          => 'checkbox',
+        '#title'         => t("Show available tokens in field's description"),
+        '#return_value'  => 1,
+        '#default_value' => empty($instance['widget']['settings']['show_token_tree']) ? 0 : 1,
+      );
+
+      break;
+  }
+}
+
+/**
  * Trim text.
  *
  * @param string $text
@@ -351,4 +455,28 @@ function _advanced_text_formatter_browse_tokens($token_types) {
   $vars['token_types'] = $token_types;
 
   return theme('token_tree_link', $vars);
+}
+
+/**
+ * Add available tokens link to text_format element.
+ *
+ * @param array $element
+ *   Form element
+ *
+ * @return array
+ *   Form element
+ */
+function _advanced_text_formatter_field_add_token_tree($element) {
+  $element['format']['show_token'] = array(
+    '#type' => 'container',
+    'link'  => array(
+      '#markup' => _advanced_text_formatter_browse_tokens($element['#entity_type']),
+    ),
+    '#attributes' => array(
+      'class' => array('clearfix'),
+    ),
+    '#weight' => 99,
+  );
+
+  return $element;
 }
