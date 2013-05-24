@@ -51,8 +51,8 @@ Options:
 - Allowed HTML tags (when Filter is Limit allowed HTML tags): Specify tags which
   should not be stripped.
 - Format (when Filter is Drupal): Drupal's filters.
-- Convert line breaks into HTML: All new lines will be converted to &lt;br&gt;
-  by using PHP nl2br()
+- Convert line breaks into HTML: Converts line breaks into P tag and BR tag in
+  an intelligent fashion.
 
 Optional
 
