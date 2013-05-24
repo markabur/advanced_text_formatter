@@ -87,6 +87,11 @@ function advanced_text_formatter_field_widget_text_textarea_with_summary_form_al
  * Implements hook_field_formatter_info().
  */
 function advanced_text_formatter_field_formatter_info() {
+  $default_tags = array(
+    'a', 'b', 'br', 'dd', 'dl', 'dt', 'em', 'i', 'li', 'ol', 'p', 'strong',
+    'u', 'ul',
+  );
+
   return array(
     'advanced_text' => array(
       'label'       => t('Advanced Text'),
@@ -98,7 +103,7 @@ function advanced_text_formatter_field_formatter_info() {
         'token_replace' => 0,
         'filter'        => 'input',
         'format'        => 'plain_text',
-        'allowed_html'  => '<a> <em> <strong>',
+        'allowed_html'  => $default_tags,
         'autop'         => 0,
       ),
     ),
@@ -195,14 +200,22 @@ function advanced_text_formatter_field_formatter_settings_form($field, $instance
       $element['format']['#options'][$format] = $info->name;
     }
 
+    if (empty($settings['allowed_html'])) {
+      $tags = '';
+    }
+    else {
+      $tags = '<' . implode('> <', $settings['allowed_html']) . '>';
+    }
+
     $element['allowed_html'] = array(
-      '#type'          => 'textfield',
-      '#title'         => t('Allowed HTML tags'),
-      '#description'   => t('See PHP <a href="@link">strip_tags()</a> for more information', array(
-                            '@link' => 'http://php.net/manual/en/function.strip-tags.php',
-                          )),
-      '#default_value' => $settings['allowed_html'],
-      '#states'        => array(
+      '#type'              => 'textfield',
+      '#title'             => t('Allowed HTML tags'),
+      '#description'       => t('See <a href="@link" target="_blank">filter_xss()</a> for more information', array(
+                                '@link' => 'http://api.drupal.org/api/drupal/includes%21common.inc/function/filter_xss/7',
+                              )),
+      '#default_value'     => $tags,
+      '#element_validate'  => array('_advanced_text_formatter_validate_allowed_html'),
+      '#states'            => array(
         'visible' => array(
           '#' . $elid_filter  => array('value' => 'php'),
         ),
@@ -210,7 +223,7 @@ function advanced_text_formatter_field_formatter_settings_form($field, $instance
     );
 
     $element['autop'] = array(
-      '#title'         => t('Convert line breaks into HTML'),
+      '#title'         => t('Converts line breaks into HTML (i.e. &lt;br&gt; and &lt;p&gt;) tags.'),
       '#type'          => 'checkbox',
       '#return_value'  => 1,
       '#default_value' => $settings['autop'],
@@ -260,12 +273,12 @@ function advanced_text_formatter_field_formatter_settings_summary($field, $insta
 
       case 'php':
         $text = array();
-        $tags = trim($settings['allowed_html']);
 
-        if (empty($tags)) {
+        if (empty($settings['allowed_html'])) {
           $text[] = t('Remove all HTML tags.');
         }
         else {
+          $tags = '<' . implode('> <', $settings['allowed_html']) . '>';
           $text[] = t('Limit allowed HTML tags: !tags.', array('!tags' => $tags));
         }
 
@@ -319,12 +332,10 @@ function advanced_text_formatter_field_formatter_view($entity_type, $entity, $fi
             break;
 
           case 'php':
-            $tags   = trim($settings['allowed_html']);
-            $tags   = str_replace(' ', '', $tags);
-            $output = strip_tags($output, $tags);
+            $output = filter_xss($output, $settings['allowed_html']);
 
             if ($settings['autop']) {
-              $output = nl2br($output);
+              $output = _filter_autop($output);
             }
 
             break;
@@ -482,4 +493,24 @@ function _advanced_text_formatter_field_add_token_tree($element) {
   );
 
   return $element;
+}
+
+/**
+ * Change tags from string to array to speed up the formatter view.
+ *
+ * @param array $element
+ *   Form element.
+ *
+ * @param array $form_state
+ *   Form state.
+ */
+function _advanced_text_formatter_validate_allowed_html($element, &$form_state) {
+  $tags  = array();
+  $value = isset($element['#value']) ? trim($element['#value']) : '';
+
+  if (!empty($value)) {
+    $tags = preg_split('/\s+|<|>/', $value, -1, PREG_SPLIT_NO_EMPTY);
+  }
+
+  drupal_array_set_nested_value($form_state['values'], $element['#parents'], $tags);
 }
