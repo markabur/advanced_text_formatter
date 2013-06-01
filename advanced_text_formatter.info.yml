@@ -1,0 +1,9 @@
+name: 'Advanced Text Formatter'
+type: module
+description: 'Provides an additional formatter for text field, text area and text format.'
+package: Fields
+version: VERSION
+core: 8.x
+dependencies:
+  - text
+  - filter

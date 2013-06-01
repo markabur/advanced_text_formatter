@@ -1,7 +1,0 @@
-name = Advanced Text Formatter
-description = "Provides an additional formatter for text field, text area and text format."
-core = 7.x
-package = Fields
-
-dependencies[] = text
-dependencies[] = filter
