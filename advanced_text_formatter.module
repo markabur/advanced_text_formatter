@@ -282,7 +282,7 @@ function advanced_text_formatter_field_formatter_settings_summary($field, $insta
           $text[] = t('Limit allowed HTML tags: !tags.', array('!tags' => $tags));
         }
 
-        if (empty($settings['autop'])) {
+        if (!empty($settings['autop'])) {
           $text[] = t('Convert line breaks into HTML.');
         }
 
