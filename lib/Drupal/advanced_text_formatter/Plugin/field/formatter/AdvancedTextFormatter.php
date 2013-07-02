@@ -8,17 +8,17 @@
 namespace Drupal\advanced_text_formatter\Plugin\field\formatter;
 
 use Drupal;
-use Drupal\Component\Annotation\Plugin;
 use Drupal\Core\Annotation\Translation;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Utility\Token;
+use Drupal\field\Annotation\FieldFormatter;
 use Drupal\field\Plugin\Type\Formatter\FormatterBase;
 use Drupal\filter\Plugin\Core\Entity\FilterFormat;
 
 /**
  * Plugin implementation of the 'advanced_text_formatter' formatter.
  *
- * @Plugin(
+ * @FieldFormatter(
  *   id = "advanced_text",
  *   module = "advanced_text_formatter",
  *   label = @Translation("Advanced Text"),
@@ -26,6 +26,9 @@ use Drupal\filter\Plugin\Core\Entity\FilterFormat;
  *     "text",
  *     "text_long",
  *     "text_with_summary"
+ *   },
+ *   edit = {
+ *     "editor" = "direct"
  *   },
  *   settings = {
  *     "trim_length" = "600",
@@ -81,7 +84,7 @@ class AdvancedTextFormatter extends FormatterBase {
       ),
     );
 
-    $token_link = _advanced_text_formatter_browse_tokens($this->instance['entity_type']);
+    $token_link = _advanced_text_formatter_browse_tokens($this->fieldDefinition->entity_type);
 
     $element['token_replace'] = array(
       '#type'          => 'checkbox',
@@ -182,7 +185,7 @@ class AdvancedTextFormatter extends FormatterBase {
       $summary[] = t('Word Boundary') . ': ' . ($this->getSetting('word_boundary') ? $yes : $no);
     }
 
-    $token_link = _advanced_text_formatter_browse_tokens($this->instance['entity_type']);
+    $token_link = _advanced_text_formatter_browse_tokens($this->fieldDefinition->entity_type);
     $summary[] = t('Token Replace') . ': ' . ($this->getSetting('token_replace') ? ($yes . '. ' . $token_link) : $no);
 
     switch ($this->getSetting('filter')) {

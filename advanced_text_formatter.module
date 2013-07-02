@@ -22,13 +22,13 @@ function advanced_text_formatter_field_widget_info_alter(&$info) {
  * Implements hook_field_widget_WIDGET_TYPE_form_alter().
  */
 function advanced_text_formatter_field_widget_text_textarea_form_alter(&$element, &$form_state, $context) {
-  $instance = $context['instance'];
-  $widget   = _advanced_text_formatter_get_widget($instance);
+  $widget = $context['widget'];
 
   if (!module_exists('token') || !$widget->getSetting('show_token_tree')) {
     return;
   }
 
+  $field       = $context['field_definition'];
   $description = trim($element['#description']);
 
   if (!empty($description)) {
@@ -40,7 +40,7 @@ function advanced_text_formatter_field_widget_text_textarea_form_alter(&$element
     }
   }
 
-  $description .= _advanced_text_formatter_browse_tokens($instance['entity_type']);
+  $description .= _advanced_text_formatter_browse_tokens($field->entity_type);
 
   $element['#description'] = $description;
   $element['value']['#description'] = $description;
@@ -50,13 +50,13 @@ function advanced_text_formatter_field_widget_text_textarea_form_alter(&$element
  * Implements hook_field_widget_WIDGET_TYPE_form_alter().
  */
 function advanced_text_formatter_field_widget_text_textfield_form_alter(&$element, &$form_state, $context) {
-  $instance = $context['instance'];
-  $widget   = _advanced_text_formatter_get_widget($instance);
+  $widget = $context['widget'];
 
   if (!module_exists('token') || !$widget->getSetting('show_token_tree')) {
     return;
   }
 
+  $field       = $context['field_definition'];
   $description = trim($element['#description']);
 
   if (!empty($description)) {
@@ -68,7 +68,7 @@ function advanced_text_formatter_field_widget_text_textfield_form_alter(&$elemen
     }
   }
 
-  $description .= _advanced_text_formatter_browse_tokens($instance['entity_type']);
+  $description .= _advanced_text_formatter_browse_tokens($field->entity_type);
 
   $element['#description'] = $description;
   $element['value']['#description'] = $description;
@@ -78,8 +78,7 @@ function advanced_text_formatter_field_widget_text_textfield_form_alter(&$elemen
  * Implements hook_field_widget_WIDGET_TYPE_form_alter().
  */
 function advanced_text_formatter_field_widget_text_textarea_with_summary_form_alter(&$element, &$form_state, $context) {
-  $instance = $context['instance'];
-  $widget   = _advanced_text_formatter_get_widget($instance);
+  $widget = $context['widget'];
 
   if (!module_exists('token') || !$widget->getSetting('show_token_tree')) {
     return;
@@ -238,29 +237,4 @@ function _advanced_text_formatter_validate_allowed_html($element, &$form_state) 
   }
 
   NestedArray::setValue($form_state['values'], $element['#parents'], $tags);
-}
-
-/**
- * Get field widget.
- *
- * @param \Drupal\field\Plugin\Core\Entity\FieldInstance $instance
- *   Field Instance.
- *
- * @return \Drupal\field\Plugin\Type\Widget\WidgetBase
- *   Field Widget.
- */
-function _advanced_text_formatter_get_widget($instance) {
-  $cache = &drupal_static(__FUNCTION__, array());
-  $uuid  = $instance->uuid;
-
-  if (!isset($cache[$uuid])) {
-    $bundle              = $instance['bundle'];
-    $entity_type         = $instance['entity_type'];
-    $field               = $instance->getField();
-    $entity_form_display = entity_get_form_display($entity_type, $bundle, 'default');
-
-    $cache[$uuid] = $entity_form_display->getWidget($field->id);
-  }
-
-  return $cache[$uuid];
 }
