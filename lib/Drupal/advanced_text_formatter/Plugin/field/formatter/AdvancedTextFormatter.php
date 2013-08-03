@@ -10,6 +10,7 @@ namespace Drupal\advanced_text_formatter\Plugin\field\formatter;
 use Drupal;
 use Drupal\Core\Annotation\Translation;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\Field\FieldInterface;
 use Drupal\Core\Utility\Token;
 use Drupal\field\Annotation\FieldFormatter;
 use Drupal\field\Plugin\Type\Formatter\FormatterBase;
@@ -27,9 +28,6 @@ use Drupal\filter\Plugin\Core\Entity\FilterFormat;
  *     "text_long",
  *     "text_with_summary"
  *   },
- *   edit = {
- *     "editor" = "direct"
- *   },
  *   settings = {
  *     "trim_length" = "600",
  *     "ellipsis" = "1",
@@ -39,6 +37,9 @@ use Drupal\filter\Plugin\Core\Entity\FilterFormat;
  *     "format" = "plain_text",
  *     "allowed_html" = "<a> <b> <br> <dd> <dl> <dt> <em> <i> <li> <ol> <p> <strong> <u> <ul>",
  *     "autop" = "0"
+ *   },
+ *   edit = {
+ *     "editor" = "form"
  *   }
  * )
  */
@@ -242,11 +243,12 @@ class AdvancedTextFormatter extends FormatterBase {
   /**
    * {@inheritdoc}
    */
-  public function viewElements(EntityInterface $entity, $langcode, array $items) {
+  public function viewElements(EntityInterface $entity, $langcode, FieldInterface $items) {
     $elements   = array();
     $token_data = array($entity->getType() => $entity);
 
-    foreach ($items as $delta => $item) {
+    foreach ($items as $delta => $field_item) {
+      $item   = $field_item->getValue();
       $output = $item['value'];
 
       if ($this->getSetting('token_replace')) {
