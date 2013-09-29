@@ -7,14 +7,12 @@
 
 namespace Drupal\advanced_text_formatter\Plugin\field\formatter;
 
-use Drupal;
+use Drupal\Component\Utility\Xss;
 use Drupal\Core\Annotation\Translation;
-use Drupal\Core\Entity\EntityInterface;
-use Drupal\Core\Entity\Field\FieldInterface;
-use Drupal\Core\Utility\Token;
 use Drupal\field\Annotation\FieldFormatter;
 use Drupal\field\Plugin\Type\Formatter\FormatterBase;
 use Drupal\filter\Plugin\Core\Entity\FilterFormat;
+use Drupal\Core\Entity\Field\FieldItemListInterface;
 
 /**
  * Plugin implementation of the 'advanced_text_formatter' formatter.
@@ -52,13 +50,13 @@ class AdvancedTextFormatter extends FormatterBase {
     $elid_filter = drupal_html_id('advanced_text_formatter_filter');
 
     $element['trim_length'] = array(
-      '#id'               => $elid_trim,
-      '#type'             => 'number',
-      '#title'            => t('Trim length'),
-      '#description'      => t("Set this to 0 if you don't want to cut the text. Otherwise, input a positive integer."),
-      '#size'             => 10,
-      '#default_value'    => $this->getSetting('trim_length'),
-      '#required'         => TRUE,
+      '#id'            => $elid_trim,
+      '#type'          => 'number',
+      '#title'         => t('Trim length'),
+      '#description'   => t("Set this to 0 if you don't want to cut the text. Otherwise, input a positive integer."),
+      '#size'          => 10,
+      '#default_value' => $this->getSetting('trim_length'),
+      '#required'      => TRUE,
     );
 
     $element['ellipsis'] = array(
@@ -103,9 +101,9 @@ class AdvancedTextFormatter extends FormatterBase {
       '#type'    => 'select',
       '#options' => array(
         'none'   => t('None'),
-        'input'      => t('Selected Text Format'),
-        'php'        => t('Limit allowed HTML tags'),
-        'drupal'     => t('Drupal'),
+        'input'  => t('Selected Text Format'),
+        'php'    => t('Limit allowed HTML tags'),
+        'drupal' => t('Drupal'),
       ),
       '#default_value' => $this->getSetting('filter'),
     );
@@ -141,16 +139,16 @@ class AdvancedTextFormatter extends FormatterBase {
     }
 
     $element['allowed_html'] = array(
-      '#type'              => 'textfield',
-      '#title'             => t('Allowed HTML tags'),
-      '#description'       => t('See <a href="@link" target="_blank">filter_xss()</a> for more information', array(
-                                '@link' => 'http://api.drupal.org/api/drupal/includes%21common.inc/function/filter_xss/8',
+      '#type'             => 'textfield',
+      '#title'            => t('Allowed HTML tags'),
+      '#description'      => t('See <a href="@link" target="_blank">filter_xss()</a> for more information', array(
+                                '@link' => 'http://api.drupal.org/api/drupal/core%21includes%21common.inc/function/filter_xss/8',
                               )),
-      '#default_value'     => $tags,
-      '#element_validate'  => array('_advanced_text_formatter_validate_allowed_html'),
-      '#states'            => array(
+      '#default_value'    => $tags,
+      '#element_validate' => array('_advanced_text_formatter_validate_allowed_html'),
+      '#states'           => array(
         'visible' => array(
-          '#' . $elid_filter  => array('value' => 'php'),
+          '#' . $elid_filter => array('value' => 'php'),
         ),
       ),
     );
@@ -205,7 +203,7 @@ class AdvancedTextFormatter extends FormatterBase {
         $tags  = $this->getSetting('allowed_html');
         $autop = $this->getSetting('autop');
 
-        if (is_array($tags)) {
+        if (is_array($tags) && !empty($tags)) {
           $tags = '<' . implode('> <', $tags) . '>';
         }
 
@@ -243,26 +241,28 @@ class AdvancedTextFormatter extends FormatterBase {
   /**
    * {@inheritdoc}
    */
-  public function viewElements(EntityInterface $entity, $langcode, FieldInterface $items) {
-    $elements   = array();
-    $token_data = array($entity->getType() => $entity);
+  public function viewElements(FieldItemListInterface $items) {
+    $elements = array();
+    $token_data = array(
+      'user' => \Drupal::currentUser(),
+      $items->getEntity()->entityType() => $items->getEntity(),
+    );
 
-    foreach ($items as $delta => $field_item) {
-      $item   = $field_item->getValue();
-      $output = $item['value'];
+    foreach ($items as $delta => $item) {
+      $output = $item->value;
 
       if ($this->getSetting('token_replace')) {
-        $output = Drupal::token()->replace($output, $token_data);
+        $output = \Drupal::token()->replace($output, $token_data);
       }
 
       switch ($this->getSetting('filter')) {
         case 'drupal':
-          $output = check_markup($output, $this->getSetting('format'), $langcode);
+          $output = check_markup($output, $this->getSetting('format'), $item->getLangcode());
 
           break;
 
         case 'php':
-          $output = filter_xss($output, $this->getSetting('allowed_html'));
+          $output = Xss::filter($output, $this->getSetting('allowed_html'));
 
           if ($this->getSetting('autop')) {
             $output = _filter_autop($output);
@@ -271,7 +271,7 @@ class AdvancedTextFormatter extends FormatterBase {
           break;
 
         case 'input':
-          $output = check_markup($output, $item['format'], $langcode);
+          $output = check_markup($output, $item->format, $item->getLangcode());
 
           break;
       }
