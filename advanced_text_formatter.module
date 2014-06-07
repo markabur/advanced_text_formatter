@@ -5,6 +5,14 @@
  * Advanced Text Formatter
  */
 
+function advanced_text_formatter_js_alter(&$javascript) {
+  $token_js = drupal_get_path('module', 'token') . '/token.js';
+
+  if (isset($javascript[$token_js])) {
+    $javascript[$token_js]['data'] = drupal_get_path('module', 'advanced_text_formatter') . '/js/token.js';
+  }
+}
+
 /**
  * Implements hook_field_widget_info_alter().
  */
