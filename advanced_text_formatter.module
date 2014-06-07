@@ -105,6 +105,7 @@ function advanced_text_formatter_field_formatter_info() {
         'format'        => 'plain_text',
         'allowed_html'  => $default_tags,
         'autop'         => 0,
+        'use_summary'   => 0,
       ),
     ),
   );
@@ -155,6 +156,13 @@ function advanced_text_formatter_field_formatter_settings_form($field, $instance
           '#' . $elid_trim  => array('!value' => '0'),
         ),
       ),
+    );
+
+    $element['use_summary'] = array(
+      '#type'           => 'checkbox',
+      '#title'          => t('Use Summary'),
+      '#description'    => t('If a summary exists, use it.'),
+      '#default_value'  => $settings['use_summary'],
     );
 
     $token_link = _advanced_text_formatter_browse_tokens($instance['entity_type']);
@@ -256,6 +264,7 @@ function advanced_text_formatter_field_formatter_settings_summary($field, $insta
       $summary[] = t('Trim length') . ': ' . $settings['trim_length'];
       $summary[] = t('Ellipsis') . ': ' . ((isset($settings['ellipsis']) && $settings['ellipsis']) ? $yes : $no);
       $summary[] = t('Word Boundary') . ': ' . ((isset($settings['word_boundary']) && $settings['word_boundary']) ? $yes : $no);
+      $summary[] = t('Use Summary') . ': ' . ((isset($settings['use_summary']) && $settings['use_summary']) ? $yes : $no);
     }
 
     $token_link = _advanced_text_formatter_browse_tokens($instance['entity_type']);
@@ -319,7 +328,12 @@ function advanced_text_formatter_field_formatter_view($entity_type, $entity, $fi
       $token_data = array($entity_type => $entity);
 
       foreach ($items as $delta => $item) {
-        $output = $item['value'];
+        if ($settings['use_summary'] && !empty($item['summary'])) {
+          $output = $item['summary'];
+        }
+        else {
+          $output = $item['value'];
+        }
 
         if ($settings['token_replace']) {
           $output = token_replace($output, $token_data);
