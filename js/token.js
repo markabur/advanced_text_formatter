@@ -44,9 +44,11 @@
       $('body', context).once('atf', function () {
         // Keep track of which ckeditor was last selected/focused.
         if (typeof CKEDITOR !== 'undefined') {
-          var ckeditorVersion = CKEDITOR.version.split('.')[0] | 0;
+          var ckeditorVersion = CKEDITOR.version.split('.');
+          var ckeditorMajorVersion = ckeditorVersion[0] | 0;
+          var ckeditorMinorVersion = ckeditorVersion[1] | 0;
 
-          if (ckeditorVersion >= 4) {
+          if (ckeditorMajorVersion > 3 || (ckeditorMajorVersion == 3 && ckeditorMinorVersion > 4)) {
             CKEDITOR.on('instanceCreated', function(e) {
               var editor = new Drupal.advancedTextFormatterTokenCKEditor(e.editor.id, e.editor);
               Drupal.advancedTextFormatterTokenField.instances[e.editor.id] = editor;
