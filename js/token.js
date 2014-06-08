@@ -52,13 +52,14 @@
             CKEDITOR.on('instanceCreated', function(e) {
               var editor = new Drupal.advancedTextFormatterTokenCKEditor(e.editor.id, e.editor);
               Drupal.advancedTextFormatterTokenField.instances[e.editor.id] = editor;
+              delete Drupal.settings.tokenFocusedField;
             });
 
             CKEDITOR.on('instanceDestroyed', function (e) {
               delete Drupal.advancedTextFormatterTokenField.instances[e.editor.id];
+              delete Drupal.settings.tokenFocusedField;
             });
 
-            delete Drupal.settings.tokenFocusedField;
           }
         }
 
