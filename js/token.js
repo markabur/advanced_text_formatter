@@ -63,6 +63,21 @@
           }
         }
 
+        if (typeof tinyMCE !== 'undefined') {
+          if (tinyMCE.majorVersion == 3) {
+            tinyMCE.onAddEditor.add(function(mgr, tinyMceEditor) {
+              var editor = new Drupal.advancedTextFormatterTokenTinyMceEditor(tinyMceEditor.id, tinyMceEditor);
+              Drupal.advancedTextFormatterTokenField.instances[tinyMceEditor.id] = editor;
+              delete Drupal.settings.tokenFocusedField;
+            });
+
+            tinyMCE.onRemoveEditor.add(function(mgr, editor) {
+              delete Drupal.advancedTextFormatterTokenField.instances[editor.id];
+              delete Drupal.settings.tokenFocusedField;
+            });
+          }
+        }
+
         $(this).delegate('.token-click-insert .token-key a', 'click', function() {
           if (typeof Drupal.settings.tokenFocusedField === 'undefined') {
             alert(Drupal.t('First click a text field to insert your tokens into.'));
@@ -132,6 +147,31 @@
 
   Drupal.advancedTextFormatterTokenCKEditor.prototype.insertToken = function(token) {
     this.editor.insertText(token);
+  };
+
+  // TinyMceEditor
+  Drupal.advancedTextFormatterTokenTinyMceEditor = function (id, editor) {
+    var self = this;
+    self.id = id;
+    self.editor = editor;
+
+    self.editor.onClick.add(function(ed) {
+      self.focus();
+    });
+  };
+
+  Drupal.advancedTextFormatterTokenTinyMceEditor.prototype = $.extend({}, Drupal.advancedTextFormatterTokenField);
+
+  Drupal.advancedTextFormatterTokenTinyMceEditor.prototype.toString = function(token) {
+    return '[TinyMceEditor "' + this.id + '"]';
+  };
+
+  Drupal.advancedTextFormatterTokenTinyMceEditor.prototype.getElement = function(token) {
+    return jQuery('#' + this.id + '_parent');
+  };
+
+  Drupal.advancedTextFormatterTokenTinyMceEditor.prototype.insertToken = function(token) {
+    this.editor.execCommand('mceInsertContent', false, token);
   };
 
   // Normal form element
