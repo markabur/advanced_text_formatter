@@ -148,7 +148,9 @@
   Drupal.advancedTextFormatterTokenFormField.prototype = $.extend({}, Drupal.advancedTextFormatterTokenField);
 
   Drupal.advancedTextFormatterTokenFormField.prototype.toString = function(token) {
-    return '[' + this.field.nodeType + ' "' + this.id + '"]';
+    var nodeName = this.field.nodeName.toLowerCase();
+    nodeName = nodeName[0].toUpperCase() + nodeName.slice(1);
+    return '[' + nodeName + ' "' + this.id + '"]';
   };
 
   Drupal.advancedTextFormatterTokenFormField.prototype.getElement = function(token) {
