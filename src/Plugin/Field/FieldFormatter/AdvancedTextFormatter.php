@@ -36,14 +36,14 @@ class AdvancedTextFormatter extends FormatterBase {
    */
   public static function defaultSettings() {
     return array(
-      'trim_length' => '600',
-      'ellipsis' => '1',
-      'word_boundary' => '1',
-      'token_replace' => '0',
+      'trim_length' => 600,
+      'ellipsis' => 1,
+      'word_boundary' => 1,
+      'token_replace' => 0,
       'filter' => 'input',
       'format' => 'plain_text',
       'allowed_html' => '<a> <b> <br> <dd> <dl> <dt> <em> <i> <li> <ol> <p> <strong> <u> <ul>',
-      'autop' => '0',
+      'autop' => 0,
       'use_summary' => 0,
     ) + parent::defaultSettings();
   }
