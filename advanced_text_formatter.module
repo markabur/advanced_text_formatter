@@ -77,6 +77,11 @@ function advanced_text_formatter_field_widget_text_textarea_with_summary_form_al
     return;
   }
 
+  if (empty($element['#pre_render'])) {
+    $info = element_info('text_format');
+    $element['#pre_render'] = empty($info['#pre_render']) ? array() : $info['#pre_render'];
+  }
+
   $element['#pre_render'][] = '_advanced_text_formatter_field_add_token_tree';
 }
 
