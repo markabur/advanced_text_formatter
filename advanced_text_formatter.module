@@ -5,18 +5,11 @@
  * Advanced Text Formatter
  */
 
+use Drupal\Component\Utility\Html;
 use Drupal\Component\Utility\NestedArray;
-
-/**
- * Implements hook_field_widget_info_alter().
- */
-function advanced_text_formatter_field_widget_info_alter(&$info) {
-  if (module_exists('token')) {
-    $info['text_textarea']['settings']['show_token_tree'] = FALSE;
-    $info['text_textfield']['settings']['show_token_tree'] = FALSE;
-    $info['text_textarea_with_summary']['settings']['show_token_tree'] = FALSE;
-  }
-}
+use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Field\WidgetInterface;
+use Drupal\filter\Plugin\Filter;
 
 /**
  * Implements hook_field_widget_WIDGET_TYPE_form_alter().
@@ -24,11 +17,11 @@ function advanced_text_formatter_field_widget_info_alter(&$info) {
 function advanced_text_formatter_field_widget_text_textarea_form_alter(&$element, &$form_state, $context) {
   $widget = $context['widget'];
 
-  if (!module_exists('token') || !$widget->getSetting('show_token_tree')) {
+  if (!module_exists('token') || !_advanced_text_formatter_show_token_tree($widget)) {
     return;
   }
 
-  $field       = $context['field_definition'];
+  $entity_type = $context['items']->getEntity()->getEntityTypeId();
   $description = trim($element['#description']);
 
   if (!empty($description)) {
@@ -40,7 +33,7 @@ function advanced_text_formatter_field_widget_text_textarea_form_alter(&$element
     }
   }
 
-  $description .= _advanced_text_formatter_browse_tokens($field->entity_type);
+  $description .= _advanced_text_formatter_browse_tokens($entity_type);
 
   $element['#description'] = $description;
   $element['value']['#description'] = $description;
@@ -52,11 +45,11 @@ function advanced_text_formatter_field_widget_text_textarea_form_alter(&$element
 function advanced_text_formatter_field_widget_text_textfield_form_alter(&$element, &$form_state, $context) {
   $widget = $context['widget'];
 
-  if (!module_exists('token') || !$widget->getSetting('show_token_tree')) {
+  if (!module_exists('token') || !_advanced_text_formatter_show_token_tree($widget)) {
     return;
   }
 
-  $field       = $context['field_definition'];
+  $entity_type = $context['items']->getEntity()->getEntityTypeId();
   $description = trim($element['#description']);
 
   if (!empty($description)) {
@@ -68,7 +61,7 @@ function advanced_text_formatter_field_widget_text_textfield_form_alter(&$elemen
     }
   }
 
-  $description .= _advanced_text_formatter_browse_tokens($field->entity_type);
+  $description .= _advanced_text_formatter_browse_tokens($entity_type);
 
   $element['#description'] = $description;
   $element['value']['#description'] = $description;
@@ -80,7 +73,7 @@ function advanced_text_formatter_field_widget_text_textfield_form_alter(&$elemen
 function advanced_text_formatter_field_widget_text_textarea_with_summary_form_alter(&$element, &$form_state, $context) {
   $widget = $context['widget'];
 
-  if (!module_exists('token') || !$widget->getSetting('show_token_tree')) {
+  if (!module_exists('token') || !_advanced_text_formatter_show_token_tree($widget)) {
     return;
   }
 
@@ -88,29 +81,28 @@ function advanced_text_formatter_field_widget_text_textarea_with_summary_form_al
 }
 
 /**
- * Implements hook_field_widget_settings_form_alter().
+ * Implements hook_field_widget_third_party_settings_form().
  */
-function advanced_text_formatter_field_widget_settings_form_alter(&$form, &$form_state, $context) {
-  if (!module_exists('token')) {
-    return;
+function advanced_text_formatter_field_widget_third_party_settings_form(WidgetInterface $plugin, FieldDefinitionInterface $field_definition, $form_mode, $form, $form_state) {
+  $element = array();
+
+  if (module_exists('token')) {
+    switch ($plugin->getPluginId()) {
+      case 'text_textarea':
+      case 'text_textfield':
+      case 'text_textarea_with_summary':
+        $element['show_token_tree'] = array(
+          '#type'          => 'checkbox',
+          '#title'         => t("Show available tokens in field's description"),
+          '#return_value'  => 1,
+          '#default_value' => _advanced_text_formatter_show_token_tree($plugin),
+        );
+
+        break;
+    }
   }
 
-  $widget      = $context['widget'];
-  $widget_type = $widget->getPluginId();
-
-  switch ($widget_type) {
-    case 'text_textarea':
-    case 'text_textfield':
-    case 'text_textarea_with_summary':
-      $form['show_token_tree'] = array(
-        '#type'          => 'checkbox',
-        '#title'         => t("Show available tokens in field's description"),
-        '#return_value'  => 1,
-        '#default_value' => $widget->getSetting('show_token_tree'),
-      );
-
-      break;
-  }
+  return $element;
 }
 
 /**
@@ -128,7 +120,7 @@ function advanced_text_formatter_field_widget_settings_summary_alter(&$summary, 
     case 'text_textarea':
     case 'text_textfield':
     case 'text_textarea_with_summary':
-      if ($widget->getSetting('show_token_tree')) {
+      if (_advanced_text_formatter_show_token_tree($widget)) {
         $summary[] = t("Show available tokens in field's description");
       }
 
@@ -160,7 +152,6 @@ function advanced_text_formatter_trim_text($text, $options) {
   if (drupal_strlen($text) > $options['max_length']) {
     $text = drupal_substr($text, 0, $options['max_length']);
 
-    // TODO: replace this with cleanstring of ctools.
     if (!empty($options['word_boundary'])) {
       $regex = "(.*)\b.+";
 
@@ -186,7 +177,7 @@ function advanced_text_formatter_trim_text($text, $options) {
   }
 
   if (!empty($options['html'])) {
-    $text = _filter_htmlcorrector($text);
+    $text = Html::normalize($text);
   }
 
   return $text;
@@ -202,7 +193,7 @@ function advanced_text_formatter_trim_text($text, $options) {
  * @return string
  *   A HTML link
  */
-function _advanced_text_formatter_browse_tokens($token_types) {
+function _advanced_text_formatter_browse_tokens($token_types) {return 'test';
   if (!module_exists('token')) {
     return;
   }
@@ -214,6 +205,19 @@ function _advanced_text_formatter_browse_tokens($token_types) {
   $vars['token_types'] = $token_types;
 
   return theme('token_tree_link', $vars);
+}
+
+/**
+ * Check if we should display the token tree or not.
+ *
+ * @param  WidgetInterface $widget
+ *   Widget.
+ *
+ * @return bool
+ *   TRUE or FALSE.
+ */
+function _advanced_text_formatter_show_token_tree($widget) {
+  return $widget->getThirdPartySetting('advanced_text_formatter', 'show_token_tree');
 }
 
 /**

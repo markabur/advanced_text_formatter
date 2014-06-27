@@ -5,14 +5,13 @@
  * Contains \Drupal\advanced_text_formatter\Plugin\field\formatter\AdvancedTextFormatter.
  */
 
-namespace Drupal\advanced_text_formatter\Plugin\field\formatter;
+namespace Drupal\advanced_text_formatter\Plugin\Field\FieldFormatter;
 
 use Drupal\Component\Utility\Xss;
 use Drupal\Core\Annotation\Translation;
-use Drupal\field\Annotation\FieldFormatter;
-use Drupal\field\Plugin\Type\Formatter\FormatterBase;
-use Drupal\filter\Plugin\Core\Entity\FilterFormat;
-use Drupal\Core\Entity\Field\FieldItemListInterface;
+use Drupal\Core\Field\Annotation\FieldFormatter;
+use Drupal\Core\Field\FormatterBase;
+use Drupal\Core\Field\FieldItemListInterface;
 
 /**
  * Plugin implementation of the 'advanced_text_formatter' formatter.
@@ -24,24 +23,30 @@ use Drupal\Core\Entity\Field\FieldItemListInterface;
  *   field_types = {
  *     "text",
  *     "text_long",
- *     "text_with_summary"
+ *     "text_with_summary",
  *   },
- *   settings = {
- *     "trim_length" = "600",
- *     "ellipsis" = "1",
- *     "word_boundary" = "1",
- *     "token_replace" = "0",
- *     "filter" = "input",
- *     "format" = "plain_text",
- *     "allowed_html" = "<a> <b> <br> <dd> <dl> <dt> <em> <i> <li> <ol> <p> <strong> <u> <ul>",
- *     "autop" = "0"
- *   },
- *   edit = {
- *     "editor" = "form"
+ *   quickedit = {
+ *     "editor" = "plain_text"
  *   }
  * )
  */
 class AdvancedTextFormatter extends FormatterBase {
+  /**
+   * {@inheritdoc}
+   */
+  public static function defaultSettings() {
+    return array(
+      'trim_length' => '600',
+      'ellipsis' => '1',
+      'word_boundary' => '1',
+      'token_replace' => '0',
+      'filter' => 'input',
+      'format' => 'plain_text',
+      'allowed_html' => '<a> <b> <br> <dd> <dl> <dt> <em> <i> <li> <ol> <p> <strong> <u> <ul>',
+      'autop' => '0',
+    ) + parent::defaultSettings();
+  }
+
   /**
    * {@inheritdoc}
    */
@@ -245,7 +250,7 @@ class AdvancedTextFormatter extends FormatterBase {
     $elements = array();
     $token_data = array(
       'user' => \Drupal::currentUser(),
-      $items->getEntity()->entityType() => $items->getEntity(),
+      $items->getEntity()->getEntityTypeId() => $items->getEntity(),
     );
 
     foreach ($items as $delta => $item) {
