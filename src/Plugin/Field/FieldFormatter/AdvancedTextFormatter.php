@@ -8,8 +8,8 @@
 namespace Drupal\advanced_text_formatter\Plugin\Field\FieldFormatter;
 
 use Drupal\Component\Utility\Xss;
-use Drupal\Core\Annotation\Translation;
-use Drupal\Core\Field\Annotation\FieldFormatter;
+use Drupal\Component\Utility\Html;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Field\FieldItemListInterface;
 
@@ -21,6 +21,8 @@ use Drupal\Core\Field\FieldItemListInterface;
  *   module = "advanced_text_formatter",
  *   label = @Translation("Advanced Text"),
  *   field_types = {
+ *     "string",
+ *     "string_long",
  *     "text",
  *     "text_long",
  *     "text_with_summary",
@@ -31,6 +33,11 @@ use Drupal\Core\Field\FieldItemListInterface;
  * )
  */
 class AdvancedTextFormatter extends FormatterBase {
+  const FORMAT_DRUPAL = 'drupal';
+  const FORMAT_INPUT = 'input';
+  const FORMAT_NONE = 'none';
+  const FORMAT_PHP = 'php';
+
   /**
    * {@inheritdoc}
    */
@@ -51,12 +58,12 @@ class AdvancedTextFormatter extends FormatterBase {
   /**
    * {@inheritdoc}
    */
-  public function settingsForm(array $form, array &$form_state) {
-    $elid_trim   = drupal_html_id('advanced_text_formatter_trim');
-    $elid_filter = drupal_html_id('advanced_text_formatter_filter');
+  public function settingsForm(array $form, FormStateInterface $form_state) {
+    $elTrimLengthId = Html::getUniqueId('advanced_text_formatter_trim');
+    $elFilterId     = Html::getUniqueId('advanced_text_formatter_filter');
 
     $element['trim_length'] = array(
-      '#id'            => $elid_trim,
+      '#id'            => $elTrimLengthId,
       '#type'          => 'number',
       '#title'         => t('Trim length'),
       '#description'   => t("Set this to 0 if you don't want to cut the text. Otherwise, input a positive integer."),
@@ -72,7 +79,7 @@ class AdvancedTextFormatter extends FormatterBase {
       '#default_value' => $this->getSetting('ellipsis'),
       '#states'        => array(
         'visible' => array(
-          '#' . $elid_trim  => array('!value' => '0'),
+          '#' . $elTrimLengthId => array('!value' => '0'),
         ),
       ),
     );
@@ -84,7 +91,7 @@ class AdvancedTextFormatter extends FormatterBase {
       '#default_value' => $this->getSetting('word_boundary'),
       '#states'        => array(
         'visible' => array(
-          '#' . $elid_trim  => array('!value' => '0'),
+          '#' . $elTrimLengthId => array('!value' => '0'),
         ),
       ),
     );
@@ -109,14 +116,14 @@ class AdvancedTextFormatter extends FormatterBase {
     );
 
     $element['filter'] = array(
-      '#id'      => $elid_filter,
+      '#id'      => $elFilterId,
       '#title'   => t('Filter'),
       '#type'    => 'select',
       '#options' => array(
-        'none'   => t('None'),
-        'input'  => t('Selected Text Format'),
-        'php'    => t('Limit allowed HTML tags'),
-        'drupal' => t('Drupal'),
+        static::FORMAT_NONE   => t('None'),
+        static::FORMAT_INPUT  => t('Selected Text Format'),
+        static::FORMAT_PHP    => t('Limit allowed HTML tags'),
+        static::FORMAT_DRUPAL => t('Drupal'),
       ),
       '#default_value' => $this->getSetting('filter'),
     );
@@ -128,27 +135,27 @@ class AdvancedTextFormatter extends FormatterBase {
       '#default_value' => $this->getSetting('format'),
       '#states'        => array(
         'visible' => array(
-          '#' . $elid_filter  => array('value' => 'drupal'),
+          '#' . $elFilterId  => array('value' => 'drupal'),
         ),
       ),
     );
 
     $formats = filter_formats();
 
-    foreach ($formats as $format_id => $format) {
-      $element['format']['#options'][$format_id] = $format->name;
+    foreach ($formats as $formatId => $format) {
+      $element['format']['#options'][$formatId] = $format->name;
     }
 
-    $allowed_html = $this->getSetting('allowed_html');
+    $allowedHtml = $this->getSetting('allowed_html');
 
-    if (empty($allowed_html)) {
+    if (empty($allowedHtml)) {
       $tags = '';
     }
-    elseif (is_string($allowed_html)) {
-      $tags = $allowed_html;
+    elseif (is_string($allowedHtml)) {
+      $tags = $allowedHtml;
     }
     else {
-      $tags = '<' . implode('> <', $allowed_html) . '>';
+      $tags = '<' . implode('> <', $allowedHtml) . '>';
     }
 
     $element['allowed_html'] = array(
@@ -161,7 +168,7 @@ class AdvancedTextFormatter extends FormatterBase {
       '#element_validate' => array('_advanced_text_formatter_validate_allowed_html'),
       '#states'           => array(
         'visible' => array(
-          '#' . $elid_filter => array('value' => 'php'),
+          '#' . $elFilterId => array('value' => 'php'),
         ),
       ),
     );
@@ -173,7 +180,7 @@ class AdvancedTextFormatter extends FormatterBase {
       '#default_value' => $this->getSetting('autop'),
       '#states'        => array(
         'invisible' => array(
-          '#' . $elid_filter  => array('!value' => 'php'),
+          '#' . $elFilterId  => array('!value' => 'php'),
         ),
       ),
     );
@@ -202,7 +209,7 @@ class AdvancedTextFormatter extends FormatterBase {
     $summary[] = t('Token Replace') . ': ' . ($this->getSetting('token_replace') ? ($yes . '. ' . $token_link) : $no);
 
     switch ($this->getSetting('filter')) {
-      case 'drupal':
+      case static::FORMAT_DRUPAL:
         $formats = filter_formats();
         $format  = $this->getSetting('format');
         $format  = isset($formats[$format]) ? $formats[$format]->name : t('Unknown');
@@ -212,7 +219,7 @@ class AdvancedTextFormatter extends FormatterBase {
 
         break;
 
-      case 'php':
+      case static::FORMAT_PHP:
         $text  = array();
         $tags  = $this->getSetting('allowed_html');
         $autop = $this->getSetting('autop');
@@ -236,7 +243,7 @@ class AdvancedTextFormatter extends FormatterBase {
 
         break;
 
-      case 'input':
+      case static::FORMAT_INPUT:
         $summary[] = t('Filter: @filter', array('@filter' => t('Selected Text Format')));
 
         break;
@@ -275,12 +282,12 @@ class AdvancedTextFormatter extends FormatterBase {
       }
 
       switch ($this->getSetting('filter')) {
-        case 'drupal':
+        case static::FORMAT_DRUPAL:
           $output = check_markup($output, $this->getSetting('format'), $item->getLangcode());
 
           break;
 
-        case 'php':
+        case static::FORMAT_PHP:
           $output = Xss::filter($output, $this->getSetting('allowed_html'));
 
           if ($this->getSetting('autop')) {
@@ -289,7 +296,7 @@ class AdvancedTextFormatter extends FormatterBase {
 
           break;
 
-        case 'input':
+        case static::FORMAT_INPUT:
           $output = check_markup($output, $item->format, $item->getLangcode());
 
           break;
