@@ -143,7 +143,7 @@ class AdvancedTextFormatter extends FormatterBase {
     $formats = filter_formats();
 
     foreach ($formats as $formatId => $format) {
-      $element['format']['#options'][$formatId] = $format->name;
+      $element['format']['#options'][$formatId] = $format->get('name');
     }
 
     $allowedHtml = $this->getSetting('allowed_html');
@@ -205,8 +205,7 @@ class AdvancedTextFormatter extends FormatterBase {
       $summary[] = t('Use Summary') . ': ' . ($this->getSetting('use_summary') ? $yes : $no);
     }
 
-    $token_link = _advanced_text_formatter_browse_tokens($this->fieldDefinition->entity_type);
-    $summary[] = t('Token Replace') . ': ' . ($this->getSetting('token_replace') ? ($yes . '. ' . $token_link) : $no);
+    $summary[] = t('Token Replace') . ': ' . ($this->getSetting('token_replace') ? $yes : $no);
 
     switch ($this->getSetting('filter')) {
       case static::FORMAT_DRUPAL:

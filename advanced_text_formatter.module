@@ -216,7 +216,7 @@ function advanced_text_formatter_trim_text($text, $options) {
     $options['html'] = TRUE;
   }
 
-  if (drupal_strlen($text) > $options['max_length']) {
+  if (Unicode::strlen($text) > $options['max_length']) {
     $text = Unicode::substr($text, 0, $options['max_length']);
 
     if (!empty($options['word_boundary'])) {
@@ -271,7 +271,7 @@ function _advanced_text_formatter_browse_tokens($token_types) {
 
   $vars['token_types'] = $token_types;
 
-  return theme('token_tree_link', $vars);
+  return \Drupal::theme()->render('token_tree_link', $vars);
 }
 
 /**
