@@ -18,15 +18,16 @@ hook_entity_info_alter() or install Entity view modes module.
 
 Dependencies:
 
-- Text (Drupal 7.x Core)
-- Filter (Drupal 7.x Core)
+- Text (Drupal 8.x Core)
+- Filter (Drupal 8.x Core)
 
 Installation:
 
 Download the module and simply copy it into your contributed modules folder:
-[for example, your_drupal_path/sites/all/modules] and enable it from the
+[for example, your_drupal_path/modules] and enable it from the
 modules administration/management page.
-More information at: Installing contributed modules (Drupal 7)
+More information at: Installing contributed modules (Drupal 8)
+https://www.drupal.org/documentation/install/modules-themes/modules-8
 
 Configuration
 

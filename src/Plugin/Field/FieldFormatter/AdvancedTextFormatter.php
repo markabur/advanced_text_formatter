@@ -103,7 +103,7 @@ class AdvancedTextFormatter extends FormatterBase {
       '#default_value'  => $this->getSetting('use_summary'),
     );
 
-    $token_link = _advanced_text_formatter_browse_tokens($this->fieldDefinition->entity_type);
+    $token_link = _advanced_text_formatter_browse_tokens($this->fieldDefinition->getTargetEntityTypeId());
 
     $element['token_replace'] = array(
       '#type'          => 'checkbox',
@@ -261,7 +261,7 @@ class AdvancedTextFormatter extends FormatterBase {
   /**
    * {@inheritdoc}
    */
-  public function viewElements(FieldItemListInterface $items) {
+  public function viewElements(FieldItemListInterface $items, $langcode) {
     $elements = array();
     $token_data = array(
       'user' => \Drupal::currentUser(),
@@ -311,7 +311,12 @@ class AdvancedTextFormatter extends FormatterBase {
         $output = advanced_text_formatter_trim_text($output, $options);
       }
 
-      $elements[$delta] = array('#markup' => $output);
+      $elements[$delta] = array(
+        '#type' => 'processed_text',
+        '#text' => $output,
+        '#format' => $item->format,
+        '#langcode' => $item->getLangcode(),
+      );
     }
 
     return $elements;
