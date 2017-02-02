@@ -1,6 +1,6 @@
 name = Advanced Text Formatter
 description = "Provides an additional formatter for text field, text area and text format."
-core = 7.x
+backdrop = 1.x
 package = Fields
 
 dependencies[] = text
