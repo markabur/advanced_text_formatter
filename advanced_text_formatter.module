@@ -6,10 +6,10 @@
  */
 
 function advanced_text_formatter_js_alter(&$javascript) {
-  $token_js = drupal_get_path('module', 'token') . '/token.js';
+  $token_js = backdrop_get_path('module', 'token') . '/token.js';
 
   if (isset($javascript[$token_js])) {
-    $javascript[$token_js]['data'] = drupal_get_path('module', 'advanced_text_formatter') . '/js/token.js';
+    $javascript[$token_js]['data'] = backdrop_get_path('module', 'advanced_text_formatter') . '/js/token.js';
   }
 }
 
@@ -133,8 +133,8 @@ function advanced_text_formatter_field_formatter_settings_form($field, $instance
   $element  = array();
 
   if ($display['type'] == 'advanced_text') {
-    $elid_trim   = drupal_html_id('advanced_text_formatter_trim');
-    $elid_filter = drupal_html_id('advanced_text_formatter_filter');
+    $elid_trim   = backdrop_html_id('advanced_text_formatter_trim');
+    $elid_filter = backdrop_html_id('advanced_text_formatter_filter');
 
     $element['trim_length'] = array(
       '#id'               => $elid_trim,
@@ -439,8 +439,8 @@ function advanced_text_formatter_trim_text($text, $options) {
     $options['html'] = TRUE;
   }
 
-  if (drupal_strlen($text) > $options['max_length']) {
-    $text = drupal_substr($text, 0, $options['max_length']);
+  if (backdrop_strlen($text) > $options['max_length']) {
+    $text = backdrop_substr($text, 0, $options['max_length']);
 
     // TODO: replace this with cleanstring of ctools.
     if (!empty($options['word_boundary'])) {
@@ -539,5 +539,5 @@ function _advanced_text_formatter_validate_allowed_html($element, &$form_state) 
     $tags = preg_split('/\s+|<|>/', $value, -1, PREG_SPLIT_NO_EMPTY);
   }
 
-  drupal_array_set_nested_value($form_state['values'], $element['#parents'], $tags);
+  backdrop_array_set_nested_value($form_state['values'], $element['#parents'], $tags);
 }
